@@ -42,8 +42,11 @@ header{display:flex;align-items:center;gap:10px;margin-bottom:14px}h1{font-size:
 .dys button{aspect-ratio:1;border-radius:50%;background:var(--bg);color:var(--m);font-weight:700}.dys .on{background:var(--p);color:#fff}
 .bt{width:100%;padding:14px;border-radius:14px;font-weight:700;background:var(--p);color:#fff;margin-top:4px}.bt.g{background:none;color:var(--m)}.bt.r{background:none;color:var(--d)}
 .err{color:var(--d);font-size:13px;min-height:18px}.tip{background:var(--ps);color:var(--pd);border-radius:14px;padding:10px 14px;font-size:13px;margin-bottom:12px}
+.tb{display:flex;gap:10px;margin-bottom:12px}.tb .seg{flex:1}.seg button{flex:1}
+.chs{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 12px}.ch{background:var(--ps);color:var(--pd);font-size:12px;font-weight:700;padding:4px 10px;border-radius:10px}
+.sl{font-size:13px;font-weight:700;margin:10px 4px 6px}
 </style></head><body>
-<div class="w"><div id="tip"></div><header><h1>Mis Pastillas</h1><button class="pill" data-a="hoy">Hoy</button><div class="seg" id="seg"></div></header><main id="app"></main></div>
+<div class="w"><div id="upd"></div><div id="tip"></div><header><h1>Mis Pastillas</h1><button class="pill" data-a="set">Ajustes</button></header><div class="tb"><button class="pill" data-a="hoy">Hoy</button><div class="seg" id="seg"></div></div><main id="app"></main><p class="note" id="ver" style="text-align:center"></p></div>
 <button class="fab" data-a="add">+ Añadir</button><div id="sheet"></div>
 <script>
 const $=s=>document.querySelector(s),K='pastillas.v1',pad=n=>String(n).padStart(2,'0');
@@ -53,11 +56,18 @@ const key=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()),dow=d=
 add=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x},parse=v=>{const[y,m,d]=v.split('-');return new Date(+y,m-1,+d)},
 esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])),pl=n=>n+(n==1?' pastilla':' pastillas');
 let today=new Date();today.setHours(0,0,0,0);
-let sel=new Date(today),view='week',vm=new Date(today.getFullYear(),today.getMonth(),1),F,ip,S=load();
-function load(){try{const s=JSON.parse(localStorage.getItem(K));if(s&&s.meds)return s}catch(e){}
-const a=[0,1,2,3,4,5,6];return{start:key(today),done:{},meds:[{id:'a1',n:'Vitamina D',t:'09:00',d:a},{id:'a2',n:'Hierro',t:'09:30',d:[0,2,4]},{id:'a3',n:'Vitamina B12',t:'10:00',d:[1,3]},{id:'a4',n:'Omega 3',t:'14:00',d:[0,1,3,5]},{id:'a5',n:'Calcio',t:'20:00',d:[3,5,6]},{id:'a6',n:'Magnesio',t:'22:00',d:a}]}}
+let sel=new Date(today),view='week',vm=new Date(today.getFullYear(),today.getMonth(),1),F,ip,S;
+const SL={m:'Mañana',t:'Tarde',n:'Noche'},SO=['m','t','n'],DT={m:'09:00',t:'15:00',n:'21:00'};
+function slotOf(t){const h=+t.split(':')[0];return h<12?'m':h<20?'t':'n'}
+const grp=(arr,f)=>SO.map(x=>{const a=arr.filter(m=>m.s==x);return a.length?f(x,a):''}).join('');
+let REG,VERS,AC;
+function load(){let s;try{s=JSON.parse(localStorage.getItem(K))}catch(e){}
+if(!s||!s.meds){const a=[0,1,2,3,4,5,6];s={start:key(today),done:{},meds:[{id:'a1',n:'Vitamina D',t:'09:00',d:a},{id:'a2',n:'Hierro',t:'09:30',d:[0,2,4]},{id:'a3',n:'Vitamina B12',t:'10:00',d:[1,3]},{id:'a4',n:'Omega 3',t:'14:00',d:[0,1,3,5]},{id:'a5',n:'Calcio',t:'20:00',d:[3,5,6]},{id:'a6',n:'Magnesio',t:'22:00',d:a}]}}
+s.cfg=Object.assign({rem:false},s.cfg);s.cfg.times=Object.assign({},DT,s.cfg.times);
+s.meds.forEach(m=>{if(!m.s)m.s=m.t?slotOf(m.t):'m'});return s}
+S=load();
 const save=()=>{try{localStorage.setItem(K,JSON.stringify(S))}catch(e){}};
-const medsFor=d=>S.meds.filter(m=>m.d.includes(dow(d))).sort((a,b)=>(a.t||'99:99').localeCompare(b.t||'99:99')||a.n.localeCompare(b.n));
+const medsFor=d=>S.meds.filter(m=>m.d.includes(dow(d))).sort((a,b)=>SO.indexOf(a.s)-SO.indexOf(b.s)||(a.t||'99:99').localeCompare(b.t||'99:99')||a.n.localeCompare(b.n));
 const isDone=(m,d)=>(S.done[key(d)]||[]).includes(m.id),tracked=d=>key(d)>=S.start&&d<=today;
 const ds=m=>m.d.length==7?'Todos los días':m.d.map(i=>DS[i][0]+DS[i].slice(1).toLowerCase()).join(', ');
 function render(){
@@ -71,11 +81,12 @@ h+=`<button class="dc${same(d,today)?' t':''}${same(d,sel)?' s':''}" data-a="day
 h+='</div>';
 const l=medsFor(sel),isT=same(sel,today),tr=tracked(sel),pe=l.filter(m=>!isDone(m,sel)),co=l.filter(m=>isDone(m,sel)),
 w=['Hoy','Mañana','Ayer'][[0,1,-1].indexOf(Math.round((sel-today)/864e5))];
-h+=`<div class="card"><h2>${w?w+' · ':''}${DN[dow(sel)]} ${sel.getDate()} de ${MN[sel.getMonth()]}</h2><p>${!l.length?'Nada programado para este día':!tr?pl(l.length)+(l.length==1?' programada':' programadas'):isT&&!pe.length?'¡Todo completado por hoy!':co.length+' de '+l.length+' completadas'}</p>${tr&&l.length?`<div class="bar"><div style="width:${co.length/l.length*100}%"></div></div>`:''}</div>`;
-const row=(m,dn)=>`<div class="row${dn?' d':''}"><button class="ck${dn?' on':''}${isT?'':' off'}" data-a="chk" data-v="${m.id}">${dn?'✓':''}</button><div class="info"><div class="n">${esc(m.n)}</div><div class="s2">${m.t?m.t+' · ':''}${ds(m)}</div></div><button class="mo" data-a="edit" data-v="${m.id}">⋯</button></div>`;
+const chips='<div class="chs">'+SO.map(x=>{const a=l.filter(m=>m.s==x);return a.length?`<span class="ch">${SL[x]} ${tr?a.filter(m=>isDone(m,sel)).length+'/':''}${a.length}</span>`:''}).join('')+'</div>';
+h+=`<div class="card"><h2>${w?w+' · ':''}${DN[dow(sel)]} ${sel.getDate()} de ${MN[sel.getMonth()]}</h2><p>${!l.length?'Nada programado para este día':!tr?pl(l.length)+(l.length==1?' programada':' programadas'):isT&&!pe.length?'¡Todo completado por hoy!':co.length+' de '+l.length+' completadas'}</p>${l.length?chips:''}${tr&&l.length?`<div class="bar"><div style="width:${co.length/l.length*100}%"></div></div>`:''}</div>`;
+const row=(m,dn)=>`<div class="row${dn?' d':''}"><button class="ck${dn?' on':''}${isT?'':' off'}" data-a="chk" data-v="${m.id}">${dn?'✓':''}</button><div class="info"><div class="n">${esc(m.n)}</div><div class="s2">${SL[m.s]}${m.t?' · '+m.t:''} · ${ds(m)}</div></div><button class="mo" data-a="edit" data-v="${m.id}">⋯</button></div>`;
 if(!l.length)h+='<p class="note">Añade una con el botón + y elige los días en que toca.</p>';
-else if(!tr)h+=`<div class="sec">PROGRAMADAS · ${l.length}</div>`+l.map(m=>row(m,0)).join('');
-else h+=`<div class="sec">${isT?'PENDIENTES':'SIN MARCAR'} · ${pe.length}</div>`+(pe.length?pe.map(m=>row(m,0)).join(''):'<p class="note">Todo al día.</p>')+`<div class="sec">COMPLETADAS · ${co.length}</div>`+(co.length?co.map(m=>row(m,1)).join(''):'<p class="note">Todavía ninguna.</p>');
+else if(!tr)h+=`<div class="sec">PROGRAMADAS · ${l.length}</div>`+grp(l,(x,a)=>`<div class="sl">${SL[x]} · ${a.length}</div>`+a.map(m=>row(m,0)).join(''));
+else h+=`<div class="sec">${isT?'PENDIENTES':'SIN MARCAR'} · ${pe.length}</div>`+(pe.length?grp(pe,(x,a)=>`<div class="sl">${SL[x]} · ${l.filter(m=>m.s==x&&isDone(m,sel)).length}/${l.filter(m=>m.s==x).length}</div>`+a.map(m=>row(m,0)).join('')):'<p class="note">Todo al día.</p>')+`<div class="sec">COMPLETADAS · ${co.length}</div>`+(co.length?co.map(m=>row(m,1)).join(''):'<p class="note">Todavía ninguna.</p>');
 if(!isT&&l.length)h+='<p class="note">Solo se pueden marcar las pastillas de hoy.</p>';
 return h}
 function monthHTML(){
@@ -86,8 +97,43 @@ for(let n=1;n<=len;n++){const d=new Date(y,mo,n),l=medsFor(d),c=l.length,dn=l.fi
 cl=!tr?'':dn==c?'ok':same(d,today)?'':'bad';
 h+=`<button class="mc${same(d,today)?' t':''}" data-a="day" data-v="${key(d)}">${n}${c?`<em class="${cl}">${tr?dn+'/'+c:c}</em>`:''}</button>`}
 return h+'</div><p class="note">Toca un día para ver y marcar sus pastillas.</p>'}
-function form(id){const m=S.meds.find(x=>x.id==id);F={id:m?m.id:null,d:m?[...m.d]:[0,1,2,3,4,5,6]};
-$('#sheet').innerHTML=`<div class="ov" data-a="close"><div class="sh" data-a="none"><h3>${m?'Editar pastilla':'Nueva pastilla'}</h3><input id="fn" placeholder="Nombre (ej. Vitamina D)" maxlength="60" value="${m?esc(m.n):''}"><input id="ft" type="time" value="${m?m.t:''}"><b style="font-size:13px">Días que la toma</b><div class="dys">${DL.map((x,i)=>`<button class="${F.d.includes(i)?'on':''}" data-a="dy" data-v="${i}">${x}</button>`).join('')}</div><div class="err" id="er"></div><button class="bt" data-a="ok">Guardar</button>${m?'<button class="bt r" data-a="del">Eliminar</button>':''}<button class="bt g" data-a="close">Cancelar</button></div></div>`}
+function form(id){const m=S.meds.find(x=>x.id==id);F={id:m?m.id:null,d:m?[...m.d]:[0,1,2,3,4,5,6],s:m?m.s:'m',man:!!m};
+$('#sheet').innerHTML=`<div class="ov" data-a="close"><div class="sh" data-a="none"><h3>${m?'Editar pastilla':'Nueva pastilla'}</h3><input id="fn" placeholder="Nombre (ej. Vitamina D)" maxlength="60" value="${m?esc(m.n):''}"><input id="ft" type="time" value="${m?m.t:''}"><b style="font-size:13px">Momento del día</b><div class="seg" id="slb" style="margin:6px 0 10px">${SO.map(x=>`<button class="${F.s==x?'on':''}" data-a="sl" data-v="${x}">${SL[x]}</button>`).join('')}</div><b style="font-size:13px">Días que la toma</b><div class="dys">${DL.map((x,i)=>`<button class="${F.d.includes(i)?'on':''}" data-a="dy" data-v="${i}">${x}</button>`).join('')}</div><div class="err" id="er"></div><button class="bt" data-a="ok">Guardar</button>${m?'<button class="bt r" data-a="del">Eliminar</button>':''}<button class="bt g" data-a="close">Cancelar</button></div></div>`}
+const msg=t=>{const e=$('#sm');if(e)e.textContent=t};
+const unlock=()=>{try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();AC.resume&&AC.resume()}catch(e){}};document.addEventListener('click',unlock);
+function beep(){if(!AC)return;[0,.35,.7].forEach(t=>{const o=AC.createOscillator(),g=AC.createGain(),n=AC.currentTime+t;o.connect(g);g.connect(AC.destination);o.frequency.value=880;g.gain.setValueAtTime(.25,n);g.gain.exponentialRampToValueAtTime(.001,n+.3);o.start(n);o.stop(n+.3)})}
+const canN=()=>'Notification'in window&&Notification.permission==='granted';
+function notify(title,body,tag){if(!canN())return;const o={body,icon:'icon-192.png',badge:'icon-192.png',vibrate:[400,200,400,200,400],tag,renotify:true,requireInteraction:true};
+const fb=()=>{try{new Notification(title,o)}catch(e){}};
+navigator.serviceWorker?navigator.serviceWorker.ready.then(r=>r.showNotification(title,o)).catch(fb):fb();
+if(!document.hidden){beep();navigator.vibrate&&navigator.vibrate(o.vibrate)}}
+const rt=m=>m.t||S.cfg.times[m.s];
+function remind(){if(!S.cfg.rem||!canN())return;const now=new Date(),mins=now.getHours()*60+now.getMinutes(),k=key(today);
+if(!S.nt||S.nt.k!==k)S.nt={k,m:{}};
+const due=medsFor(today).filter(m=>{if(isDone(m,today))return false;const[h,mi]=rt(m).split(':');if(+h*60+ +mi>mins)return false;const x=S.nt.m[m.id];return!x||(x.c<3&&Date.now()-x.ts>=6e5)});
+if(!due.length)return;due.forEach(m=>{const x=S.nt.m[m.id]||{c:0};S.nt.m[m.id]={c:x.c+1,ts:Date.now()}});save();
+notify('Hora de tus pastillas',due.map(m=>m.n).join(', '),'pastillas')}
+async function enable(){if(!('Notification'in window))return msg('Este navegador no permite notificaciones. Usa las alarmas del calendario.');
+let p=Notification.permission;if(p==='default')p=await Notification.requestPermission();
+if(p==='granted'){S.cfg.rem=true;save();settings();msg('Recordatorios activados.')}else msg('Permiso denegado. Actívalo en los ajustes del móvil para esta app.')}
+function mkIcs(){const D=['MO','TU','WE','TH','FR','SA','SU'],e=t=>t.replace(/[\\;,]/g,'\\$&'),st=new Date().toISOString().replace(/[-:]/g,'').slice(0,15)+'Z',L=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Mis Pastillas//ES','CALSCALE:GREGORIAN'];
+S.meds.forEach(m=>{const t=rt(m).split(':');let d=new Date(today);while(!m.d.includes(dow(d)))d=add(d,1);
+L.push('BEGIN:VEVENT','UID:'+m.id+'@mispastillas','DTSTAMP:'+st,'DTSTART:'+key(d).replace(/-/g,'')+'T'+t[0]+t[1]+'00','DURATION:PT5M','RRULE:FREQ=WEEKLY;BYDAY='+m.d.map(i=>D[i]).join(','),'SUMMARY:'+e('Pastilla: '+m.n.slice(0,50)),'BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:'+e('Tomar '+m.n.slice(0,50)),'TRIGGER:PT0S','END:VALARM','END:VEVENT')});
+return L.concat('END:VCALENDAR').join('\r\n')}
+async function sendIcs(){const x=mkIcs(),f=new File([x],'mis-pastillas.ics',{type:'text/calendar'});
+try{if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title:'Alarmas de Mis Pastillas'});return}}catch(e){if(e.name==='AbortError')return}
+const u=URL.createObjectURL(new Blob([x],{type:'text/calendar'})),a=document.createElement('a');a.href=u;a.download='mis-pastillas.ics';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),9e3)}
+function settings(){const c=S.cfg;$('#sheet').innerHTML=`<div class="ov" data-a="close"><div class="sh" data-a="none" style="max-height:90vh;overflow:auto"><h3>Ajustes</h3>
+<div class="sec">RECORDATORIOS (con la app abierta)</div><button class="bt" data-a="rem">${c.rem?'Activados · pulsa para desactivar':'Activar recordatorios'}</button>
+<p class="note">Hora de aviso para pastillas sin hora propia:</p><div style="display:flex;gap:8px">${SO.map(x=>`<label class="note" style="flex:1">${SL[x]}<input type="time" id="tm_${x}" value="${c.times[x]}"></label>`).join('')}</div>
+<button class="bt g" data-a="test">Enviar notificación de prueba</button>
+<div class="sec">ALARMAS EN EL CALENDARIO (recomendado)</div><p class="note">Suenan y vibran con el móvil bloqueado. Se crea un archivo: ábrelo y elige «Añadir al calendario». Repite si cambias pastillas u horas.</p><button class="bt" data-a="ics">Crear alarmas en el calendario</button>
+<div class="sec">ACTUALIZACIÓN · versión ${VERS||'?'}</div><button class="bt g" data-a="chk2">Buscar actualización</button><button class="bt g" data-a="fix">Reparar / forzar actualización</button>
+<div class="sec">DATOS</div><button class="bt r" data-a="wipe">Borrar todas las pastillas</button>
+<div class="err" id="sm" style="margin-top:8px"></div><button class="bt g" data-a="close">Cerrar</button></div></div>`}
+document.addEventListener('change',e=>{const i=e.target.id||'';
+if(i==='ft'&&F&&!F.man&&e.target.value){F.s=slotOf(e.target.value);document.querySelectorAll('#slb button').forEach(x=>x.classList.toggle('on',x.dataset.v===F.s))}
+if(i.startsWith('tm_')){S.cfg.times[i.slice(3)]=e.target.value||DT[i.slice(3)];save()}});
 const A={
 view:v=>{view=v;if(v=='month')vm=new Date(sel.getFullYear(),sel.getMonth(),1);render()},
 hoy:()=>{sel=new Date(today);view='week';render()},day:v=>{sel=parse(v);view='week';render()},
@@ -97,14 +143,29 @@ chk:v=>{if(!same(sel,today))return;const k=key(sel),a=S.done[k]||(S.done[k]=[]),
 add:()=>form(),edit:v=>form(v),close:()=>{$('#sheet').innerHTML=''},
 dy:(v,b)=>{const i=+v,j=F.d.indexOf(i);j<0?F.d.push(i):F.d.splice(j,1);b.classList.toggle('on')},
 ok:()=>{const n=$('#fn').value.trim(),t=$('#ft').value;if(!n)return $('#er').textContent='Escribe el nombre.';if(!F.d.length)return $('#er').textContent='Elige al menos un día.';
-const d=[...F.d].sort((a,b)=>a-b);if(F.id)Object.assign(S.meds.find(x=>x.id==F.id),{n,t,d});else S.meds.push({id:Date.now().toString(36),n,t,d});save();A.close();render()},
+const d=[...F.d].sort((a,b)=>a-b);if(F.id)Object.assign(S.meds.find(x=>x.id==F.id),{n,t,d,s:F.s});else S.meds.push({id:Date.now().toString(36),n,t,d,s:F.s});save();A.close();render()},
 del:()=>{if(!confirm('¿Eliminar esta pastilla de todos los días?'))return;S.meds=S.meds.filter(x=>x.id!=F.id);save();A.close();render()},
+sl:(v,b)=>{F.s=v;F.man=1;b.parentNode.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b))},
+set:()=>settings(),rem:()=>{if(S.cfg.rem){S.cfg.rem=false;save();return settings()}enable()},
+test:()=>{if(!('Notification'in window))return msg('Este navegador no permite notificaciones.');if(!canN())return msg('Primero activa los recordatorios.');notify('Prueba de recordatorio','Así te avisaré a la hora de tus pastillas.','prueba');msg('Notificación enviada.')},
+ics:()=>{sendIcs();msg('Archivo listo: ábrelo y añádelo al calendario.')},
+chk2:()=>{if(!REG)return msg('No disponible ahora mismo.');msg('Buscando…');REG.update().catch(()=>{}).then(()=>setTimeout(()=>msg(REG.waiting||REG.installing?'Hay una versión nueva: pulsa Actualizar arriba.':'Ya tienes la última versión.'),2500))},
+fix:()=>{if(!confirm('Se descargará la app de nuevo. Tus pastillas NO se borran. ¿Continuar?'))return;(navigator.serviceWorker?navigator.serviceWorker.getRegistrations():Promise.resolve([])).then(r=>Promise.all(r.map(x=>x.unregister()))).then(()=>caches.keys()).then(k=>Promise.all(k.map(x=>caches.delete(x)))).then(()=>location.reload())},
+wipe:()=>{if(!S.meds.length)return msg('No hay pastillas que borrar.');if(!confirm('¿Borrar TODAS las pastillas ('+S.meds.length+') y su historial? No se puede deshacer.'))return;S.meds=[];S.done={};S.nt=null;save();A.close();render()},
 inst:()=>{ip&&ip.prompt();$('#tip').innerHTML=''},tipx:()=>{try{localStorage.setItem('tipx',1)}catch(e){}$('#tip').innerHTML=''}};
 document.addEventListener('click',e=>{const b=e.target.closest('[data-a]');b&&A[b.dataset.a]&&A[b.dataset.a](b.dataset.v,b)});
 function tick(){const n=new Date();n.setHours(0,0,0,0);if(!same(n,today)){const f=same(sel,today);today=n;if(f)sel=new Date(n);render()}}
-setInterval(tick,30000);document.addEventListener('visibilitychange',tick);
+setInterval(()=>{tick();remind()},15000);document.addEventListener('visibilitychange',()=>{tick();remind()});
 addEventListener('beforeinstallprompt',e=>{e.preventDefault();ip=e;$('#tip').innerHTML='<div class="tip">Instala la app en tu móvil. <button class="pill" data-a="inst">Instalar</button></div>'});
 try{if(/iphone|ipad/i.test(navigator.userAgent)&&!navigator.standalone&&!localStorage.getItem('tipx'))$('#tip').innerHTML='<div class="tip">Para instalar: toca Compartir y luego «Añadir a pantalla de inicio». <button data-a="tipx"><b>OK</b></button></div>'}catch(e){}
-if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js');
-render();
+if('serviceWorker'in navigator){const sw=navigator.serviceWorker,had=!!sw.controller;let rl=false;
+sw.addEventListener('controllerchange',()=>{if(!had||rl)return;rl=true;location.reload()});
+sw.addEventListener('message',e=>{if(e.data&&e.data.v)VERS=e.data.v;$('#ver').textContent='Versión '+e.data.v});
+if(sw.controller)sw.controller.postMessage('VER');
+sw.register('sw.js').then(r=>{REG=r;
+const ask=w=>{$('#upd').innerHTML='<div class="tip">Hay una versión nueva. <button class="pill" id="ubtn">Actualizar</button></div>';$('#ubtn').onclick=()=>{$('#ubtn').textContent='Actualizando…';w.postMessage('SKIP_WAITING')}};
+const track=w=>{if(!w||!sw.controller)return;const f=()=>{if(w.state==='installed')ask(w)};f();w.addEventListener('statechange',f)};
+track(r.waiting);track(r.installing);r.addEventListener('updatefound',()=>track(r.installing));
+const chk=()=>r.update().catch(()=>{});setInterval(chk,36e5);document.addEventListener('visibilitychange',()=>{if(!document.hidden)chk()})})}
+render();remind();
 </script></body></html>
