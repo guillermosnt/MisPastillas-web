@@ -1,20 +1,5 @@
-MIS PASTILLAS - VERSION MOVIL (app web instalable)
-==================================================
-Es una web que, al abrirla en el telefono, se puede INSTALAR: queda un icono de
-pastilla en la pantalla de inicio, se abre a pantalla completa y funciona sin internet.
 
-1) SUBIRLA A INTERNET (necesita HTTPS; es gratis)
-   - GitHub Pages: crea un repositorio, sube TODOS estos archivos a la raiz,
-     Settings > Pages > Deploy from a branch > main > /(root).
-   - Netlify Drop (netlify.com/drop): arrastra esta carpeta y te da un enlace.
-   Pasale a la gente ese enlace (o hazle un codigo QR).
-
-2) INSTALARLA EN EL TELEFONO
+INSTALARLA EN EL TELEFONO
    - Android (Chrome): abrir el enlace > boton "Instalar" que sale arriba,
      o menu (tres puntos) > "Instalar aplicacion".
    - iPhone (Safari): abrir el enlace > Compartir > "Anadir a pantalla de inicio".
-
-NOTAS
-   - Los datos se guardan en el propio telefono (no se sincronizan entre dispositivos).
-   - Si se borran los datos del navegador, se pierden.
-   - Para actualizar la app: sube los archivos nuevos y vuelve a abrirla con internet.
