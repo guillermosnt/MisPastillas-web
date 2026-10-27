@@ -45,6 +45,12 @@ header{display:flex;align-items:center;gap:10px;margin-bottom:14px}h1{font-size:
 .tb{display:flex;gap:10px;margin-bottom:12px}.tb .seg{flex:1}.seg button{flex:1}
 .chs{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 12px}.ch{background:var(--ps);color:var(--pd);font-size:12px;font-weight:700;padding:4px 10px;border-radius:10px}
 .sl{font-size:13px;font-weight:700;margin:10px 4px 6px}
+.cel{position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.55);overflow:hidden;animation:cf .25s}.cel.out{animation:co .3s forwards}
+.cb{position:relative;background:var(--card);border-radius:26px;padding:30px 26px;text-align:center;max-width:320px;margin:16px;animation:pop .5s cubic-bezier(.2,1.4,.4,1)}.cb h2{margin:0 0 6px;font-size:21px}.cb p{margin:0;color:var(--m)}
+.cc{width:86px;height:86px;border-radius:50%;background:var(--ok);margin:0 auto 16px;display:grid;place-items:center}.cc path{animation:dr .5s .3s ease-out forwards}
+.cp{position:absolute;top:-20px;width:9px;height:14px;border-radius:2px;animation:fall linear forwards}
+@keyframes pop{from{transform:scale(.6);opacity:0}to{transform:scale(1);opacity:1}}@keyframes dr{to{stroke-dashoffset:0}}@keyframes fall{to{transform:translateY(115vh) rotate(720deg)}}@keyframes cf{from{opacity:0}}@keyframes co{to{opacity:0}}
+@media(prefers-reduced-motion:reduce){.cb,.cc path{animation:none}.cc path{stroke-dashoffset:0}}
 </style></head><body>
 <div class="w"><div id="upd"></div><div id="tip"></div><header><h1>Mis Pastillas</h1><button class="pill" data-a="set">Ajustes</button></header><div class="tb"><button class="pill" data-a="hoy">Hoy</button><div class="seg" id="seg"></div></div><main id="app"></main><p class="note" id="ver" style="text-align:center"></p></div>
 <button class="fab" data-a="add">+ Añadir</button><div id="sheet"></div>
@@ -60,13 +66,14 @@ let sel=new Date(today),view='week',vm=new Date(today.getFullYear(),today.getMon
 const SL={m:'Mañana',t:'Tarde',n:'Noche'},SO=['m','t','n'],DT={m:'09:00',t:'15:00',n:'21:00'};
 function slotOf(t){const h=+t.split(':')[0];return h<12?'m':h<20?'t':'n'}
 const grp=(arr,f)=>SO.map(x=>{const a=arr.filter(m=>m.s==x);return a.length?f(x,a):''}).join('');
-let REG,VERS,AC;
+let REG,VERS,AC,AT;const NAT=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform()),LN=NAT?Capacitor.Plugins.LocalNotifications:null;
+const PUSH={url:'PEGA_URL_DEL_WORKER',key:'PEGA_CLAVE_PUBLICA'},PUSHOK=!NAT&&'PushManager'in window&&!PUSH.url.startsWith('PEGA')&&!PUSH.key.startsWith('PEGA');
 function load(){let s;try{s=JSON.parse(localStorage.getItem(K))}catch(e){}
 if(!s||!s.meds){const a=[0,1,2,3,4,5,6];s={start:key(today),done:{},meds:[{id:'a1',n:'Vitamina D',t:'09:00',d:a},{id:'a2',n:'Hierro',t:'09:30',d:[0,2,4]},{id:'a3',n:'Vitamina B12',t:'10:00',d:[1,3]},{id:'a4',n:'Omega 3',t:'14:00',d:[0,1,3,5]},{id:'a5',n:'Calcio',t:'20:00',d:[3,5,6]},{id:'a6',n:'Magnesio',t:'22:00',d:a}]}}
 s.cfg=Object.assign({rem:false},s.cfg);s.cfg.times=Object.assign({},DT,s.cfg.times);
-s.meds.forEach(m=>{if(!m.s)m.s=m.t?slotOf(m.t):'m'});return s}
+s.nx=s.nx||0;s.meds.forEach(m=>{if(!m.s)m.s=m.t?slotOf(m.t):'m';if(!m.nid)m.nid=++s.nx});return s}
 S=load();
-const save=()=>{try{localStorage.setItem(K,JSON.stringify(S))}catch(e){}};
+const save=()=>{try{localStorage.setItem(K,JSON.stringify(S))}catch(e){}if(NAT){clearTimeout(AT);AT=setTimeout(arm,300)}if(PUSHOK){cacheLocal();clearTimeout(AT);AT=setTimeout(syncPush,800)}};
 const medsFor=d=>S.meds.filter(m=>m.d.includes(dow(d))).sort((a,b)=>SO.indexOf(a.s)-SO.indexOf(b.s)||(a.t||'99:99').localeCompare(b.t||'99:99')||a.n.localeCompare(b.n));
 const isDone=(m,d)=>(S.done[key(d)]||[]).includes(m.id),tracked=d=>key(d)>=S.start&&d<=today;
 const ds=m=>m.d.length==7?'Todos los días':m.d.map(i=>DS[i][0]+DS[i].slice(1).toLowerCase()).join(', ');
@@ -108,14 +115,14 @@ const fb=()=>{try{new Notification(title,o)}catch(e){}};
 navigator.serviceWorker?navigator.serviceWorker.ready.then(r=>r.showNotification(title,o)).catch(fb):fb();
 if(!document.hidden){beep();navigator.vibrate&&navigator.vibrate(o.vibrate)}}
 const rt=m=>m.t||S.cfg.times[m.s];
-function remind(){if(!S.cfg.rem||!canN())return;const now=new Date(),mins=now.getHours()*60+now.getMinutes(),k=key(today);
+function remind(){if(NAT||PUSHOK||!S.cfg.rem||!canN())return;const now=new Date(),mins=now.getHours()*60+now.getMinutes(),k=key(today);
 if(!S.nt||S.nt.k!==k)S.nt={k,m:{}};
 const due=medsFor(today).filter(m=>{if(isDone(m,today))return false;const[h,mi]=rt(m).split(':');if(+h*60+ +mi>mins)return false;const x=S.nt.m[m.id];return!x||(x.c<3&&Date.now()-x.ts>=6e5)});
 if(!due.length)return;due.forEach(m=>{const x=S.nt.m[m.id]||{c:0};S.nt.m[m.id]={c:x.c+1,ts:Date.now()}});save();
 notify('Hora de tus pastillas',due.map(m=>m.n).join(', '),'pastillas')}
-async function enable(){if(!('Notification'in window))return msg('Este navegador no permite notificaciones. Usa las alarmas del calendario.');
+async function enable(){if(NAT)return enableNat();if(!('Notification'in window))return msg('Este navegador no permite notificaciones. Usa las alarmas del calendario.');
 let p=Notification.permission;if(p==='default')p=await Notification.requestPermission();
-if(p==='granted'){S.cfg.rem=true;save();settings();msg('Recordatorios activados.')}else msg('Permiso denegado. Actívalo en los ajustes del móvil para esta app.')}
+if(p==='granted'){S.cfg.rem=true;save();if(PUSHOK)await syncPush();settings();msg(PUSHOK?'Recordatorios activados: te avisaremos aunque la app esté cerrada.':'Recordatorios activados.')}else msg('Permiso denegado. Actívalo en los ajustes del móvil para esta app.')}
 function mkIcs(){const D=['MO','TU','WE','TH','FR','SA','SU'],e=t=>t.replace(/[\\;,]/g,'\\$&'),st=new Date().toISOString().replace(/[-:]/g,'').slice(0,15)+'Z',L=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Mis Pastillas//ES','CALSCALE:GREGORIAN'];
 S.meds.forEach(m=>{const t=rt(m).split(':');let d=new Date(today);while(!m.d.includes(dow(d)))d=add(d,1);
 L.push('BEGIN:VEVENT','UID:'+m.id+'@mispastillas','DTSTAMP:'+st,'DTSTART:'+key(d).replace(/-/g,'')+'T'+t[0]+t[1]+'00','DURATION:PT5M','RRULE:FREQ=WEEKLY;BYDAY='+m.d.map(i=>D[i]).join(','),'SUMMARY:'+e('Pastilla: '+m.n.slice(0,50)),'BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:'+e('Tomar '+m.n.slice(0,50)),'TRIGGER:PT0S','END:VALARM','END:VEVENT')});
@@ -123,10 +130,33 @@ return L.concat('END:VCALENDAR').join('\r\n')}
 async function sendIcs(){const x=mkIcs(),f=new File([x],'mis-pastillas.ics',{type:'text/calendar'});
 try{if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title:'Alarmas de Mis Pastillas'});return}}catch(e){if(e.name==='AbortError')return}
 const u=URL.createObjectURL(new Blob([x],{type:'text/calendar'})),a=document.createElement('a');a.href=u;a.download='mis-pastillas.ics';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),9e3)}
+async function initNat(){try{await LN.createChannel({id:'pastillas',name:'Recordatorios de pastillas',description:'Avisos a la hora de cada pastilla',importance:5,visibility:1,vibration:true,lights:true})}catch(e){}}
+async function enableNat(){try{const p=await LN.requestPermissions();if(p.display!=='granted')return msg('Permiso denegado. Actívalo en Ajustes del móvil › Apps › Mis Pastillas › Notificaciones.');
+const x=await LN.checkExactNotificationSetting(),v=x&&(x.exact_alarm||x.exactAlarm);if(v&&v!=='granted'){msg('Activa «Alarmas y recordatorios» para Mis Pastillas, vuelve y pulsa de nuevo.');await LN.changeExactNotificationSetting();return}
+S.cfg.rem=true;save();settings();msg('Recordatorios activados.')}catch(e){msg('No se pudo activar: '+e)}}
+async function arm(){if(!NAT)return;try{const pd=await LN.getPending();if(pd.notifications.length)await LN.cancel({notifications:pd.notifications.map(n=>({id:n.id}))});
+if(!S.cfg.rem)return;const now=new Date(),L=[];
+for(let i=0;i<21;i++){const d=add(today,i);medsFor(d).forEach(m=>{if(isDone(m,d))return;const[h,mi]=rt(m).split(':'),at=new Date(d.getFullYear(),d.getMonth(),d.getDate(),+h,+mi);if(at>now)L.push({id:m.nid*100+i,title:'Hora de tu pastilla',body:m.n+' · '+SL[m.s],channelId:'pastillas',schedule:{at,allowWhileIdle:true}})})}
+if(L.length)await LN.schedule({notifications:L})}catch(e){}}
+async function testNat(){try{const p=await LN.requestPermissions();if(p.display!=='granted')return msg('Primero permite las notificaciones.');await initNat();
+await LN.schedule({notifications:[{id:2147000000,title:'Prueba de recordatorio',body:'Así sonará a la hora de tus pastillas.',channelId:'pastillas',schedule:{at:new Date(Date.now()+10000),allowWhileIdle:true}}]});msg('Bloquea el móvil: sonará en 10 segundos.')}catch(e){msg('Error: '+e)}}
+const u8=b=>{const r=atob((b+'='.repeat((4-b.length%4)%4)).replace(/-/g,'+').replace(/_/g,'/'));return Uint8Array.from(r,c=>c.charCodeAt(0))};
+function cacheLocal(){if(!window.caches)return;caches.open('pastillas-data').then(c=>c.put('data',new Response(JSON.stringify({day:key(today),meds:S.meds,done:S.done[key(today)]||[],times:S.cfg.times})))).catch(()=>{})}
+async function getSub(mk){const r=await navigator.serviceWorker.ready;let s=await r.pushManager.getSubscription();if(!s&&mk)s=await r.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:u8(PUSH.key)});return s}
+async function post(path,body){const r=await fetch(PUSH.url+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});if(!r.ok)throw new Error(r.status);return r}
+async function syncPush(){if(!PUSHOK||!S.cfg.rem||!canN())return;try{const s=await getSub(true),m=new Map();
+S.meds.forEach(x=>{const t=rt(x);m.set(t+'|'+[...x.d].sort().join(''),{t,d:[...x.d]})});
+await post('/sync',{ep:s.endpoint,tz:Intl.DateTimeFormat().resolvedOptions().timeZone,slots:[...m.values()]});cacheLocal()}catch(e){}}
+async function offPush(){if(!PUSHOK)return;try{const s=await getSub(false);if(s){await post('/unsub',{ep:s.endpoint}).catch(()=>{});await s.unsubscribe()}}catch(e){}}
+async function testPush(){if(!canN())return msg('Primero activa los recordatorios.');try{await syncPush();const s=await getSub(false);await post('/test',{ep:s.endpoint});msg('Bloquea el móvil: te llegará en unos segundos.')}catch(e){msg('No se pudo contactar con el servidor ('+e.message+').')}}
+function celebrate(){if(document.getElementById('cel'))return;const d=document.createElement('div');d.id='cel';d.className='cel';let cp='';
+if(!matchMedia('(prefers-reduced-motion:reduce)').matches)for(let i=0;i<46;i++)cp+=`<i class="cp" style="left:${Math.random()*100}%;background:${['#0e9f8e','#2fa463','#f5b83d','#e8618c','#5b8def'][i%5]};animation-duration:${1.8+Math.random()*1.6}s;animation-delay:${Math.random()*.5}s"></i>`;
+d.innerHTML=cp+'<div class="cb"><div class="cc"><svg width="46" height="46" viewBox="0 0 46 46"><path d="M11 24l9 9 16-19" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="48" stroke-dashoffset="48"/></svg></div><h2>¡Todas las pastillas completadas!</h2><p>Buen trabajo: hoy lo has cumplido.</p></div>';
+const x=()=>{d.classList.add('out');setTimeout(()=>d.remove(),300)};d.onclick=x;document.body.appendChild(d);setTimeout(x,3500);navigator.vibrate&&navigator.vibrate([70,50,70])}
 function settings(){const c=S.cfg;$('#sheet').innerHTML=`<div class="ov" data-a="close"><div class="sh" data-a="none" style="max-height:90vh;overflow:auto"><h3>Ajustes</h3>
-<div class="sec">RECORDATORIOS (con la app abierta)</div><button class="bt" data-a="rem">${c.rem?'Activados · pulsa para desactivar':'Activar recordatorios'}</button>
+<div class="sec">RECORDATORIOS${NAT||PUSHOK?'':' (con la app abierta)'}</div><button class="bt" data-a="rem">${c.rem?'Activados · pulsa para desactivar':'Activar recordatorios'}</button>
 <p class="note">Hora de aviso para pastillas sin hora propia:</p><div style="display:flex;gap:8px">${SO.map(x=>`<label class="note" style="flex:1">${SL[x]}<input type="time" id="tm_${x}" value="${c.times[x]}"></label>`).join('')}</div>
-<button class="bt g" data-a="test">Enviar notificación de prueba</button>
+<button class="bt g" data-a="test">Enviar notificación de prueba</button>${NAT?'<p class="note">Para cambiar el sonido: Ajustes del móvil › Apps › Mis Pastillas › Notificaciones › Recordatorios de pastillas.</p>':''}
 <div class="sec">ALARMAS EN EL CALENDARIO (recomendado)</div><p class="note">Suenan y vibran con el móvil bloqueado. Se crea un archivo: ábrelo y elige «Añadir al calendario». Repite si cambias pastillas u horas.</p><button class="bt" data-a="ics">Crear alarmas en el calendario</button>
 <div class="sec">ACTUALIZACIÓN · versión ${VERS||'?'}</div><button class="bt g" data-a="chk2">Buscar actualización</button><button class="bt g" data-a="fix">Reparar / forzar actualización</button>
 <div class="sec">DATOS</div><button class="bt r" data-a="wipe">Borrar todas las pastillas</button>
@@ -139,26 +169,26 @@ view:v=>{view=v;if(v=='month')vm=new Date(sel.getFullYear(),sel.getMonth(),1);re
 hoy:()=>{sel=new Date(today);view='week';render()},day:v=>{sel=parse(v);view='week';render()},
 pw:()=>{sel=add(sel,-7);render()},nw:()=>{sel=add(sel,7);render()},
 pm:()=>{vm=new Date(vm.getFullYear(),vm.getMonth()-1,1);render()},nm:()=>{vm=new Date(vm.getFullYear(),vm.getMonth()+1,1);render()},
-chk:v=>{if(!same(sel,today))return;const k=key(sel),a=S.done[k]||(S.done[k]=[]),i=a.indexOf(v);i<0?a.push(v):a.splice(i,1);save();render()},
+chk:v=>{if(!same(sel,today))return;const k=key(sel),a=S.done[k]||(S.done[k]=[]),i=a.indexOf(v);i<0?a.push(v):a.splice(i,1);save();render();if(i<0&&S.cel!==k&&medsFor(today).every(m=>isDone(m,today))){S.cel=k;save();celebrate()}},
 add:()=>form(),edit:v=>form(v),close:()=>{$('#sheet').innerHTML=''},
 dy:(v,b)=>{const i=+v,j=F.d.indexOf(i);j<0?F.d.push(i):F.d.splice(j,1);b.classList.toggle('on')},
 ok:()=>{const n=$('#fn').value.trim(),t=$('#ft').value;if(!n)return $('#er').textContent='Escribe el nombre.';if(!F.d.length)return $('#er').textContent='Elige al menos un día.';
-const d=[...F.d].sort((a,b)=>a-b);if(F.id)Object.assign(S.meds.find(x=>x.id==F.id),{n,t,d,s:F.s});else S.meds.push({id:Date.now().toString(36),n,t,d,s:F.s});save();A.close();render()},
+const d=[...F.d].sort((a,b)=>a-b);if(F.id)Object.assign(S.meds.find(x=>x.id==F.id),{n,t,d,s:F.s});else S.meds.push({id:Date.now().toString(36),n,t,d,s:F.s,nid:++S.nx});save();A.close();render()},
 del:()=>{if(!confirm('¿Eliminar esta pastilla de todos los días?'))return;S.meds=S.meds.filter(x=>x.id!=F.id);save();A.close();render()},
 sl:(v,b)=>{F.s=v;F.man=1;b.parentNode.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b))},
-set:()=>settings(),rem:()=>{if(S.cfg.rem){S.cfg.rem=false;save();return settings()}enable()},
-test:()=>{if(!('Notification'in window))return msg('Este navegador no permite notificaciones.');if(!canN())return msg('Primero activa los recordatorios.');notify('Prueba de recordatorio','Así te avisaré a la hora de tus pastillas.','prueba');msg('Notificación enviada.')},
+set:()=>settings(),rem:()=>{if(S.cfg.rem){S.cfg.rem=false;save();offPush();return settings()}enable()},
+test:()=>{if(NAT)return testNat();if(PUSHOK)return testPush();if(!('Notification'in window))return msg('Este navegador no permite notificaciones.');if(!canN())return msg('Primero activa los recordatorios.');notify('Prueba de recordatorio','Así te avisaré a la hora de tus pastillas.','prueba');msg('Notificación enviada.')},
 ics:()=>{sendIcs();msg('Archivo listo: ábrelo y añádelo al calendario.')},
 chk2:()=>{if(!REG)return msg('No disponible ahora mismo.');msg('Buscando…');REG.update().catch(()=>{}).then(()=>setTimeout(()=>msg(REG.waiting||REG.installing?'Hay una versión nueva: pulsa Actualizar arriba.':'Ya tienes la última versión.'),2500))},
 fix:()=>{if(!confirm('Se descargará la app de nuevo. Tus pastillas NO se borran. ¿Continuar?'))return;(navigator.serviceWorker?navigator.serviceWorker.getRegistrations():Promise.resolve([])).then(r=>Promise.all(r.map(x=>x.unregister()))).then(()=>caches.keys()).then(k=>Promise.all(k.map(x=>caches.delete(x)))).then(()=>location.reload())},
 wipe:()=>{if(!S.meds.length)return msg('No hay pastillas que borrar.');if(!confirm('¿Borrar TODAS las pastillas ('+S.meds.length+') y su historial? No se puede deshacer.'))return;S.meds=[];S.done={};S.nt=null;save();A.close();render()},
 inst:()=>{ip&&ip.prompt();$('#tip').innerHTML=''},tipx:()=>{try{localStorage.setItem('tipx',1)}catch(e){}$('#tip').innerHTML=''}};
 document.addEventListener('click',e=>{const b=e.target.closest('[data-a]');b&&A[b.dataset.a]&&A[b.dataset.a](b.dataset.v,b)});
-function tick(){const n=new Date();n.setHours(0,0,0,0);if(!same(n,today)){const f=same(sel,today);today=n;if(f)sel=new Date(n);render()}}
-setInterval(()=>{tick();remind()},15000);document.addEventListener('visibilitychange',()=>{tick();remind()});
+function tick(){const n=new Date();n.setHours(0,0,0,0);if(!same(n,today)){const f=same(sel,today);today=n;if(f)sel=new Date(n);render();NAT&&arm();PUSHOK&&cacheLocal()}}
+setInterval(()=>{tick();remind()},15000);document.addEventListener('visibilitychange',()=>{tick();remind();if(NAT&&!document.hidden)arm();if(PUSHOK&&!document.hidden)cacheLocal()});
 addEventListener('beforeinstallprompt',e=>{e.preventDefault();ip=e;$('#tip').innerHTML='<div class="tip">Instala la app en tu móvil. <button class="pill" data-a="inst">Instalar</button></div>'});
 try{if(/iphone|ipad/i.test(navigator.userAgent)&&!navigator.standalone&&!localStorage.getItem('tipx'))$('#tip').innerHTML='<div class="tip">Para instalar: toca Compartir y luego «Añadir a pantalla de inicio». <button data-a="tipx"><b>OK</b></button></div>'}catch(e){}
-if('serviceWorker'in navigator){const sw=navigator.serviceWorker,had=!!sw.controller;let rl=false;
+if(!NAT&&'serviceWorker'in navigator){const sw=navigator.serviceWorker,had=!!sw.controller;let rl=false;
 sw.addEventListener('controllerchange',()=>{if(!had||rl)return;rl=true;location.reload()});
 sw.addEventListener('message',e=>{if(e.data&&e.data.v)VERS=e.data.v;$('#ver').textContent='Versión '+e.data.v});
 if(sw.controller)sw.controller.postMessage('VER');
@@ -167,5 +197,5 @@ const ask=w=>{$('#upd').innerHTML='<div class="tip">Hay una versión nueva. <but
 const track=w=>{if(!w||!sw.controller)return;const f=()=>{if(w.state==='installed')ask(w)};f();w.addEventListener('statechange',f)};
 track(r.waiting);track(r.installing);r.addEventListener('updatefound',()=>track(r.installing));
 const chk=()=>r.update().catch(()=>{});setInterval(chk,36e5);document.addEventListener('visibilitychange',()=>{if(!document.hidden)chk()})})}
-render();remind();
+render();remind();if(NAT){VERS='4 · Android';initNat().then(arm)}if(PUSHOK){cacheLocal();syncPush()}
 </script></body></html>
