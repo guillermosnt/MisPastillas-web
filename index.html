@@ -1,6 +1,6 @@
 <!doctype html><html lang="es"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#0e9f8e"><title>Mis Pastillas</title>
+<meta name="theme-color" content="#0a7c6f"><title>Mis Pastillas</title>
 <link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Pastillas">
 <style>
@@ -49,6 +49,14 @@ h3{margin:28px 2px 2px;font-size:18px;font-weight:700;letter-spacing:-.01em}.grp
 .bt{width:100%;padding:15px;border-radius:14px;font-weight:700;background:var(--p);color:#fff;margin-top:6px}.bt.g{background:var(--bg);color:var(--t)}.bt.r{background:none;color:var(--d)}
 .sec{font-size:14px;font-weight:700;margin:20px 2px 8px}.err{color:var(--d);font-size:14px;min-height:18px}
 .tip{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--ps);color:var(--pd);border-radius:14px;padding:10px 14px;font-size:14px;font-weight:600;margin-bottom:12px}
+/* refinamiento v9 */
+:root{--band:#0a7c6f}@media(prefers-color-scheme:dark){:root{--band:#0c4a44}}
+body{padding-top:0}.band{background:var(--band);color:#fff;padding:env(safe-area-inset-top) 0 44px}.band .in{max-width:620px;margin:0 auto;padding:12px 18px 0}
+.band header{margin-bottom:20px}.band h1{font-size:17px;font-weight:650}.band .ib{color:#fff}.band .ib:hover{background:#ffffff24}.band .pill{background:#ffffff26;color:#fff;padding:8px 14px}
+.band .day{margin:0}.band .day h2{font-size:28px}.band .day p{color:#ffffffd9;margin:6px 0 16px}.band .bar{height:8px;background:#ffffff40}.band .bar div{background:#fff}
+.sheet{background:var(--bg);border-radius:28px 28px 0 0;margin-top:-28px;position:relative;min-height:62vh}.sheet .w{padding-top:22px}.tb{margin-bottom:14px}
+.strip{background:var(--card);border-radius:20px;padding:8px 6px;box-shadow:0 0 0 1px var(--l),0 1px 2px #0b1f240d}
+.cn{display:inline-grid;place-items:center;min-width:24px;height:24px;padding:0 7px;margin-left:8px;border-radius:12px;background:var(--ps);color:var(--pd);font-size:13px;font-weight:700;vertical-align:2px}
 .cel{position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.55);overflow:hidden;animation:cf .25s}.cel.out{animation:co .3s forwards}
 .cb{position:relative;background:var(--card);border-radius:26px;padding:30px 26px;text-align:center;max-width:320px;margin:16px;animation:pop .5s cubic-bezier(.2,1.4,.4,1)}.cb h2{margin:0 0 6px;font-size:21px}.cb p{margin:0;color:var(--m)}
 .cc{width:86px;height:86px;border-radius:50%;background:var(--ok);margin:0 auto 16px;display:grid;place-items:center}.cc path{animation:dr .5s .3s ease-out forwards}
@@ -56,7 +64,8 @@ h3{margin:28px 2px 2px;font-size:18px;font-weight:700;letter-spacing:-.01em}.grp
 @keyframes pop{from{transform:scale(.6);opacity:0}to{transform:scale(1);opacity:1}}@keyframes dr{to{stroke-dashoffset:0}}@keyframes fall{to{transform:translateY(115vh) rotate(720deg)}}@keyframes cf{from{opacity:0}}@keyframes co{to{opacity:0}}
 @media(prefers-reduced-motion:reduce){.cb,.cc path{animation:none}.cc path{stroke-dashoffset:0}}
 </style></head><body>
-<div class="w"><div id="upd"></div><div id="tip"></div><header><svg class="lg" viewBox="0 0 64 64" width="38" height="38" aria-hidden="true"><rect width="64" height="64" rx="18" fill="#0e9f8e"/><g transform="translate(32 32) rotate(-45)"><rect x="-19" y="-10" width="38" height="20" rx="10" fill="#fff"/><path d="M0-10h9a10 10 0 0 1 0 20h-9z" fill="#a6e3da"/></g></svg><h1>Mis Pastillas</h1><button class="ib" data-a="set" aria-label="Ajustes"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg></button></header><div class="tb"><button class="pill" data-a="hoy">Hoy</button><div class="seg" id="seg"></div></div><main id="app"></main><p class="note" id="ver" style="text-align:center"></p></div>
+<div class="band"><div class="in"><header><svg class="lg" viewBox="0 0 64 64" width="36" height="36" aria-hidden="true"><rect width="64" height="64" rx="18" fill="#ffffff2e"/><g transform="translate(32 32) rotate(-45)"><rect x="-19" y="-10" width="38" height="20" rx="10" fill="#fff"/><path d="M0-10h9a10 10 0 0 1 0 20h-9z" fill="#a6e3da"/></g></svg><h1>Mis Pastillas</h1><button class="pill" data-a="hoy">Hoy</button><button class="ib" data-a="set" aria-label="Ajustes"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg></button></header><div id="hero"></div></div></div>
+<div class="sheet"><div class="w"><div id="upd"></div><div id="tip"></div><div class="tb"><div class="seg" id="seg"></div></div><main id="app"></main><p class="note" id="ver" style="text-align:center"></p></div></div>
 <button class="fab" data-a="add"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Añadir pastilla</button><div id="sheet"></div>
 <script src="config.js"></script>
 <script>
@@ -84,23 +93,27 @@ const isDone=(m,d)=>(S.done[key(d)]||[]).includes(m.id),tracked=d=>key(d)>=S.sta
 const ds=m=>m.d.length==7?'Todos los días':m.d.map(i=>DS[i][0]+DS[i].slice(1).toLowerCase()).join(', ');
 function render(){
 $('#seg').innerHTML=['week','month'].map(v=>`<button class="${v==view?'on':''}" data-a="view" data-v="${v}">${v=='week'?'Semana':'Mes'}</button>`).join('');
-$('#app').innerHTML=view=='week'?weekHTML():monthHTML()}
+$('#hero').innerHTML=heroHTML();$('#app').innerHTML=view=='week'?weekHTML():monthHTML()}
 const IC={m:'<circle cx="12" cy="15" r="4"/><path d="M12 5v3M3 15h2M19 15h2M5.6 8.6l1.5 1.5M18.4 8.6l-1.5 1.5"/>',t:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.4 1.4M17.6 17.6L19 19M5 19l1.4-1.4M17.6 6.4L19 5"/>',n:'<path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z"/>'};
+function info(){const l=medsFor(sel),isT=same(sel,today),tr=tracked(sel),pe=l.filter(m=>!isDone(m,sel)),co=l.filter(m=>isDone(m,sel)),
+w=['Hoy','Mañana','Ayer'][[0,1,-1].indexOf(Math.round((sel-today)/864e5))];
+return{l,isT,tr,pe,co,w,sub:!l.length?'Nada programado para este día':!tr?pl(l.length)+(l.length==1?' programada':' programadas'):isT&&!pe.length?'¡Todo completado por hoy!':co.length+' de '+l.length+' completadas'}}
+function heroHTML(){
+if(view=='month'){const n=MN[vm.getMonth()];return`<div class="day"><h2>${n[0].toUpperCase()+n.slice(1)} ${vm.getFullYear()}</h2><p>Toca un día para ver y marcar sus pastillas.</p><div class="bar"></div></div>`}
+const{l,tr,co,w,sub}=info();
+return`<div class="day"><h2>${w?w+', '+DN[dow(sel)].toLowerCase():DN[dow(sel)]} ${sel.getDate()} de ${MN[sel.getMonth()]}</h2><p>${sub}</p><div class="bar">${tr&&l.length?`<div style="width:${co.length/l.length*100}%"></div>`:''}</div></div>`}
 function weekHTML(){
 const st=add(sel,-dow(sel)),en=add(st,6);
 let h=`<div class="nav"><button data-a="pw" aria-label="Semana anterior">‹</button><span>Semana del ${st.getDate()}${st.getMonth()!=en.getMonth()?' de '+MN[st.getMonth()]:''} al ${en.getDate()} de ${MN[en.getMonth()]}</span><button data-a="nw" aria-label="Semana siguiente">›</button></div><div class="strip">`;
 for(let i=0;i<7;i++){const d=add(st,i),l=medsFor(d),n=l.length,dn=l.filter(m=>isDone(m,d)).length;
 h+=`<button class="dc${same(d,today)?' t':''}${same(d,sel)?' s':''}" data-a="day" data-v="${key(d)}"><small>${DS[i][0]+DS[i].slice(1).toLowerCase()}</small><b>${d.getDate()}</b><i>${n?(tracked(d)?dn+'/'+n:n):'–'}</i></button>`}
 h+='</div>';
-const l=medsFor(sel),isT=same(sel,today),tr=tracked(sel),pe=l.filter(m=>!isDone(m,sel)),co=l.filter(m=>isDone(m,sel)),
-w=['Hoy','Mañana','Ayer'][[0,1,-1].indexOf(Math.round((sel-today)/864e5))],
-sub=!l.length?'Nada programado para este día':!tr?pl(l.length)+(l.length==1?' programada':' programadas'):isT&&!pe.length?'¡Todo completado por hoy!':co.length+' de '+l.length+' completadas';
-h+=`<div class="day"><h2>${w?w+', '+DN[dow(sel)].toLowerCase():DN[dow(sel)]} ${sel.getDate()} de ${MN[sel.getMonth()]}</h2><p>${sub}</p>${tr&&l.length?`<div class="bar"><div style="width:${co.length/l.length*100}%"></div></div>`:''}</div>`;
+const{l,isT,tr,pe,co}=info();
 const row=(m,dn)=>`<div class="row${dn?' d':''}"><button class="ck${dn?' on':''}${isT?'':' off'}" data-a="chk" data-v="${m.id}" aria-label="Marcar ${esc(m.n)}">${dn?'✓':''}</button><div class="info"><div class="n">${esc(m.n)}</div><div class="s2">${ds(m)}</div></div>${m.t?`<span class="tm">${m.t}</span>`:''}<button class="mo" data-a="edit" data-v="${m.id}" aria-label="Opciones de ${esc(m.n)}">⋯</button></div>`;
 const slots=arr=>grp(arr,(x,a)=>{const z=l.filter(m=>m.s==x);return`<div class="grp"><div class="sl"><svg class="si" viewBox="0 0 24 24">${IC[x]}</svg><span>${SL[x]}</span><em>${tr?z.filter(m=>isDone(m,sel)).length+' de '+z.length:z.length}</em></div><div class="lst">${a.map(m=>row(m,isDone(m,sel))).join('')}</div></div>`});
 if(!l.length)h+='<p class="note">Añade una con el botón de abajo y elige los días en que toca.</p>';
 else if(!tr)h+=slots(l);
-else h+='<h3>Pendientes</h3>'+(pe.length?slots(pe):'<p class="note">Todo al día.</p>')+'<h3>Completadas</h3>'+(co.length?slots(co):'<p class="note">Todavía ninguna.</p>');
+else h+=`<h3>Pendientes<span class="cn">${pe.length}</span></h3>`+(pe.length?slots(pe):'<p class="note">Todo al día.</p>')+`<h3>Completadas<span class="cn">${co.length}</span></h3>`+(co.length?slots(co):'<p class="note">Todavía ninguna.</p>');
 if(!isT&&l.length)h+='<p class="note">Solo se pueden marcar las pastillas de hoy.</p>';
 return h}
 function monthHTML(){
@@ -176,7 +189,7 @@ view:v=>{view=v;if(v=='month')vm=new Date(sel.getFullYear(),sel.getMonth(),1);re
 hoy:()=>{sel=new Date(today);view='week';render()},day:v=>{sel=parse(v);view='week';render()},
 pw:()=>{sel=add(sel,-7);render()},nw:()=>{sel=add(sel,7);render()},
 pm:()=>{vm=new Date(vm.getFullYear(),vm.getMonth()-1,1);render()},nm:()=>{vm=new Date(vm.getFullYear(),vm.getMonth()+1,1);render()},
-chk:v=>{if(!same(sel,today))return;const k=key(sel),a=S.done[k]||(S.done[k]=[]),i=a.indexOf(v);i<0?a.push(v):a.splice(i,1);save();render();if(i<0&&S.cel!==k&&medsFor(today).every(m=>isDone(m,today))){S.cel=k;save();celebrate()}},
+chk:v=>{if(!same(sel,today))return;const k=key(sel),a=S.done[k]||(S.done[k]=[]),i=a.indexOf(v);i<0?a.push(v):a.splice(i,1);save();render();const L=medsFor(today),sg=k+':'+L.map(m=>m.id).sort().join(',');if(i<0&&L.length&&L.every(m=>isDone(m,today))&&S.cel!==sg){S.cel=sg;save();celebrate()}},
 add:()=>form(),edit:v=>form(v),close:()=>{$('#sheet').innerHTML=''},
 dy:(v,b)=>{const i=+v,j=F.d.indexOf(i);j<0?F.d.push(i):F.d.splice(j,1);b.classList.toggle('on')},
 ok:()=>{const n=$('#fn').value.trim(),t=$('#ft').value;if(!n)return $('#er').textContent='Escribe el nombre.';if(!F.d.length)return $('#er').textContent='Elige al menos un día.';
