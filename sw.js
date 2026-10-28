@@ -1,5 +1,5 @@
 // Para publicar una actualizacion: cambia este numero (V) y sube los archivos a GitHub.
-const V='10',C='pastillas-v'+V,F=['./','index.html','manifest.webmanifest','icon-192.png','icon-512.png','apple-touch-icon.png','config.js'];
+const V='11',C='pastillas-v'+V,F=['./','index.html','manifest.webmanifest','icon-192.png','icon-512.png','apple-touch-icon.png','config.js'];
 self.addEventListener('install',e=>e.waitUntil(caches.open(C).then(c=>Promise.all(F.map(u=>fetch(u+'?v='+V,{cache:'reload'}).then(r=>{if(!r.ok)throw new Error(u);return c.put(u,r)}).catch(x=>{if(u!=='config.js')throw x}))))));
 self.addEventListener('message',e=>{if(e.data==='SKIP_WAITING')self.skipWaiting();if(e.data==='VER'&&e.source)e.source.postMessage({v:V})});
 self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==C&&x!=='pastillas-data').map(x=>caches.delete(x)))).then(()=>self.clients.claim())));

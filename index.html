@@ -1,6 +1,7 @@
 <!doctype html><html lang="es"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0a7c6f"><title>Mis Pastillas</title>
+<script>try{if((navigator.standalone||matchMedia("(display-mode:standalone)").matches||location.search.indexOf("splash")>-1)&&!sessionStorage.getItem("spl")){sessionStorage.setItem("spl",1);document.documentElement.className="sp"}}catch(e){}</script>
 <link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Pastillas">
 <style>
@@ -49,6 +50,12 @@ h3{margin:28px 2px 2px;font-size:18px;font-weight:700;letter-spacing:-.01em}.grp
 .bt{width:100%;padding:15px;border-radius:14px;font-weight:700;background:var(--p);color:#fff;margin-top:6px}.bt.g{background:var(--bg);color:var(--t)}.bt.r{background:none;color:var(--d)}
 .sec{font-size:14px;font-weight:700;margin:20px 2px 8px}.err{color:var(--d);font-size:14px;min-height:18px}
 .tip{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--ps);color:var(--pd);border-radius:14px;padding:10px 14px;font-size:14px;font-weight:600;margin-bottom:12px}
+/* presentacion de arranque */
+#spl{display:none;position:fixed;inset:0;z-index:50;background:var(--band);flex-direction:column;align-items:center;justify-content:center;gap:22px;transition:opacity .35s}.sp #spl{display:flex}#spl.out{opacity:0;pointer-events:none}
+#spl svg{animation:spp .35s .5s ease-out}#spl .h1{animation:sj1 .55s .1s cubic-bezier(.2,.9,.3,1.2) both}#spl .h2{animation:sj2 .55s .1s cubic-bezier(.2,.9,.3,1.2) both}
+.sp-t{color:#fff;font-size:22px;font-weight:700;letter-spacing:-.01em;animation:sup .4s .6s both}
+@keyframes sj1{from{transform:translateX(-30px);opacity:0}}@keyframes sj2{from{transform:translateX(30px);opacity:0}}@keyframes spp{40%{transform:scale(1.08)}}@keyframes sup{from{opacity:0;transform:translateY(10px)}}
+@media(prefers-reduced-motion:reduce){.sp #spl{display:none}}
 /* animaciones v10 */
 .snk{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(92px + env(safe-area-inset-bottom));z-index:15;display:flex;align-items:center;gap:14px;background:#15262b;color:#fff;padding:10px 10px 10px 18px;border-radius:14px;box-shadow:0 8px 24px #0b1f2440;font-size:15px;max-width:calc(100% - 32px)}.snk button{color:#7fe3d4;font-weight:700;padding:8px 10px}
 @media(prefers-reduced-motion:reduce){.ck.pop,.ck.pop path{animation:none}}
@@ -67,6 +74,7 @@ body{padding-top:0}.band{background:var(--band);color:#fff;padding:env(safe-area
 @keyframes pop{from{transform:scale(.6);opacity:0}to{transform:scale(1);opacity:1}}@keyframes dr{to{stroke-dashoffset:0}}@keyframes fall{to{transform:translateY(115vh) rotate(720deg)}}@keyframes cf{from{opacity:0}}@keyframes co{to{opacity:0}}
 @media(prefers-reduced-motion:reduce){.cb,.cc path{animation:none}.cc path{stroke-dashoffset:0}}
 </style></head><body>
+<div id="spl" aria-hidden="true"><svg viewBox="0 0 64 64" width="112" height="112"><rect width="64" height="64" rx="18" fill="#0e9f8e"/><g transform="translate(32 32) rotate(-45)"><g class="h1"><path d="M0-10h-9a10 10 0 0 0 0 20h9z" fill="#fff"/></g><g class="h2"><path d="M0-10h9a10 10 0 0 1 0 20h-9z" fill="#a6e3da"/></g></g></svg><div class="sp-t">Mis Pastillas</div></div>
 <div class="band"><div class="in"><header><svg class="lg" viewBox="0 0 64 64" width="36" height="36" aria-hidden="true"><rect width="64" height="64" rx="18" fill="#ffffff2e"/><g transform="translate(32 32) rotate(-45)"><rect x="-19" y="-10" width="38" height="20" rx="10" fill="#fff"/><path d="M0-10h9a10 10 0 0 1 0 20h-9z" fill="#a6e3da"/></g></svg><h1>Mis Pastillas</h1><button class="pill" data-a="hoy">Hoy</button><button class="ib" data-a="set" aria-label="Ajustes"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg></button></header><div id="hero"></div></div></div>
 <div class="sheet"><div class="w"><div id="upd"></div><div id="tip"></div><div class="tb"><div class="seg" id="seg"></div></div><main id="app"></main><p class="note" id="ver" style="text-align:center"></p></div></div>
 <button class="fab" data-a="add"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Añadir pastilla</button><div id="sheet"></div>
@@ -243,4 +251,7 @@ const track=w=>{if(!w||!sw.controller)return;const f=()=>{if(w.state==='installe
 track(r.waiting);track(r.installing);r.addEventListener('updatefound',()=>track(r.installing));
 const chk=()=>r.update().catch(()=>{});setInterval(chk,36e5);document.addEventListener('visibilitychange',()=>{if(!document.hidden)chk()})})}
 render();remind();if(NAT){VERS='4 · Android';initNat().then(arm)}if(PUSHOK){cacheLocal();syncPush()}
+const sp=document.getElementById('spl');
+if(sp){if(!(window.getComputedStyle&&getComputedStyle(sp).display!=='none'))sp.remove();
+else{const go=()=>{if(sp.classList.contains('out'))return;sp.classList.add('out');LASTP=0;render();setTimeout(()=>sp.remove(),380)};sp.onclick=go;setTimeout(go,1250)}}
 </script></body></html>
