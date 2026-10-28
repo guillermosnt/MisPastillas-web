@@ -1,5 +1,5 @@
 // Para publicar una actualizacion: cambia este numero (V) y sube los archivos a GitHub.
-const V='11',C='pastillas-v'+V,F=['./','index.html','manifest.webmanifest','icon-192.png','icon-512.png','apple-touch-icon.png','config.js'];
+const V='12',C='pastillas-v'+V,F=['./','index.html','manifest.webmanifest','icon-192.png','icon-512.png','apple-touch-icon.png','config.js'];
 self.addEventListener('install',e=>e.waitUntil(caches.open(C).then(c=>Promise.all(F.map(u=>fetch(u+'?v='+V,{cache:'reload'}).then(r=>{if(!r.ok)throw new Error(u);return c.put(u,r)}).catch(x=>{if(u!=='config.js')throw x}))))));
 self.addEventListener('message',e=>{if(e.data==='SKIP_WAITING')self.skipWaiting();if(e.data==='VER'&&e.source)e.source.postMessage({v:V})});
 self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==C&&x!=='pastillas-data').map(x=>caches.delete(x)))).then(()=>self.clients.claim())));
@@ -14,7 +14,7 @@ if(N.ver>+V&&String(N.id)!==(sn?await sn.text():'')){an=N;await c.put('seen',new
 self.registration.update().catch(()=>{})}
 const n=new Date(),m=n.getHours()*60+n.getMinutes(),pd=x=>String(x).padStart(2,'0'),dk=n.getFullYear()+'-'+pd(n.getMonth()+1)+'-'+pd(n.getDate());
 let all=[],due=[];
-if(D&&D.meds){const dn=D.day===dk?D.done:[];all=D.meds.filter(x=>x.d.includes((n.getDay()+6)%7)).filter(x=>{const[h,mi]=(x.t||D.times[x.s]).split(':');return Math.abs(+h*60+ +mi-m)<=3});due=all.filter(x=>!dn.includes(x.id))}
+if(D&&D.meds){const dn=D.day===dk?D.done:[];all=D.meds.filter(x=>x.d.includes((n.getDay()+6)%7)&&(!x.a||dk>=x.a)&&(!x.z||dk<=x.z)).filter(x=>{const[h,mi]=(x.t||D.times[x.s]).split(':');return Math.abs(+h*60+ +mi-m)<=3});due=all.filter(x=>!dn.includes(x.id))}
 const o={icon:'icon-192.png',badge:'icon-192.png',vibrate:[400,200,400,200,400],tag:'pastillas',renotify:true,requireInteraction:true};
 if(an)await self.registration.showNotification('Nueva versión de Mis Pastillas',{icon:'icon-192.png',badge:'icon-192.png',vibrate:[200,100,200],tag:'novedad',body:(an.text||'Hay una versión nueva.')+' Ábrela para actualizar.'});
 if(due.length)await self.registration.showNotification('Hora de tus pastillas',{...o,body:due.map(x=>x.n).join(', ')});
